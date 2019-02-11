@@ -1,0 +1,20 @@
+---
+title: "DATA 607 - Assignment 2"
+author: "SG"
+date: "2/10/2019"
+output: github_document
+---
+## Below is a display of the R DataFrame of Movie Ratings
+
+```{r}
+library(ggplot2)
+library(RMySQL)
+mydb = dbConnect(MySQL(), user='root', password='dataisfun', dbname='Data607', host='localhost')
+movieRatings <- dbGetQuery(mydb, "select MovieRatingID, BlackPanther_Rating, AQuietPlace_Rating, WonderWoman_Rating, ASimpleFavor_Rating, CrazyRichAsians_Rating, JohnWickChapter2_Rating from tMovieRating")
+movieRatings
+```
+
+## Summary Statistics of Movie Ratings
+```{r}
+  summary(movieRatings)
+```
