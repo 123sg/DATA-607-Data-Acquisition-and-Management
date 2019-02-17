@@ -1,0 +1,83 @@
+---
+title: "DATA 607 - Assignment 3"
+author: "SG"
+output: github_document
+---
+
+```{r}
+  library(stringr)
+```
+## 3. Copy the introductory example. The vector name stores the extracted names.  
+```{r}
+  name <- c("Moe Szyslak", "Burns, C. Montgomery", "Rev. Timothy Lovejoy", "Ned Flanders", "Simpson, Homer", "Dr. Julius Hibbert")
+  name
+```
+**Problem 1.** Use the tools of this chapter to rearrange the vector so that all elements conform to the standard first_name last_name.  
+First we split each row in the vector by the comma followed by the space:  
+```{r}
+  splitNames <- str_split(name, ", ", simplify = TRUE)
+```
+Next, we concatenate the first name with the last name, separated by a space:  
+```{r}
+  str_c(splitNames[,2], " ", splitNames[,1])
+```
+
+**Problem 2.** Construct a logical vector indicating whether a character has a title(i.e., Rev. and Dr.)  
+```{r}
+  name
+  isTitledName <- str_detect(string = name, pattern = "^\\w+[.][[:space:]](\\w+[[:space:]]\\w+)*")
+  isTitledName
+```
+**Problem 3.** Construct a logical vector indicating whether a character has a second name.  
+```{r}
+  name
+  hasSecondName <- str_detect(string = name, pattern = "[[:alpha:]]+([,]|[.])?[[:space:]][[:alpha:]]+([.]|[,]^)?[[:space:]]([[:alpha:]]+([.]|[,]^)?([[:space:]])?)*")
+  hasSecondName
+```
+## 4. Describe the types of strings that conform to the following regular expressions and construct an example that is matched by the regular expression.  
+**Problem 1.**"[0-9]+\\$"
+One or more digits that end in $
+```{r}
+  example <- c("12345\\", "0$", "123456$", "$")
+  regexExample <- unlist(str_extract_all(example, pattern="[0-9]+\\$", simplify=TRUE))
+  regexExample
+```
+**Problem 2.** \\b[a-z]{1-4}\\b  
+Lowercase letters, of a minumum length of 1 to a maximum length of 4.  
+```{r}
+example <- c("abcd", "helloWorld", "abc", "1,4", "e", "abcdefg")
+regexExample <- str_extract_all(example, pattern = "\\b[a-z]{1,4}\\b", simplify=TRUE)
+regexExample
+```
+**Problem 3.** .*?\\.txt$  
+Any string of any characters that ends in .txt  
+```{r}
+  example <- c(".txt", "test.txt", "abc", "12345&*@&#$.txt", "test.TXT", " .txt", ".txttxt", ".txtHello")
+  regexExample <- str_extract_all(example, ".*?\\.txt$", simplify=TRUE)
+  regexExample
+```
+
+**Problem 4.** \\d{2}/\\d{2}/\\d{4}  
+This regex takes in a date format. String: two digits followed by a slash, followed by two digits, followed by another slash, followed by 4 digits
+```{r}
+  example <- c("02/17/2019", "12/", "00/00/0000", "abc/a/aa", "1/1/1111")
+  regexExample <- str_extract_all(example, "\\d{2}/\\d{2}/\\d{4}", simplify=TRUE)
+  regexExample
+```
+
+**Problem 5.** <(.+?)>.+?</\\1>
+This regex seems to be for HTML formats. The string it takes is: any set of characters between < and >, followed by any set of characters, followed by <, the same set of characters that were previously between < and >, a slash, and then >  
+```{r}
+  example <- c("<b>bold text</b>", "<a>?</a>", "<b>Work</a>", "<#$%&*>Hello</#$%&*>", "<h1></h1>")
+regexExample <- str_extract_all(example, "<(.+?)>.+?</\\1>", simplify=TRUE)
+regexExample
+```
+
+##9. Extra Credit: clcopCow1zmstc0d87wnkig7OvdicpNuggvhryn92Gjuwczi8hqrfpRxs5Aj5dwpn0TanwoUwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4Sfek.r1w1YwwojigOd6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr  
+This message reads as CONGRATULATIONS YOU ARE A SUPER NERD!
+
+```{r}
+  extraCredit <- (unlist(str_extract_all("clcopCow1zmstc0d87wnkig7OvdicpNuggvhryn92Gjuwczi8hqrfpRxs5Aj5dwpn0TanwoUwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4Sfek.r1w1YwwojigOd6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr", pattern="[A-Z]", simplify=TRUE)))
+  extraCredit
+```
+
