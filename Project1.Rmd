@@ -1,0 +1,103 @@
+---
+title: "Data 607 - Project 1"
+author: "SG"
+output: github_document
+always_allow_html: yes
+---
+## Instructions:  
+In this project, you’re given a text file with chess tournament results where the information has some structure. Your job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database) with the following information for all of the players:  
+Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents  
+For the first player, the information would be:  
+Gary Hua, ON, 6.0, 1794, 1605  
+1605 was calculated by using the pre-tournament opponents’ ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and dividing by the total number of games played.
+If you have questions about the meaning of the data or the results, please post them on the discussion forum. Data science, like chess, is a game of back and forth…  
+The chess rating system (invented by a Minnesota statistician named Arpad Elo) has been used in many other contexts, including assessing relative strength of employment candidates by human resource departments.  
+You may substitute another text file (or set of text files, or data scraped from web pages) of similar or greater complexity, and create your own assignment and solution. You may work in a small team. All of your code should be in an R markdown file (and published to rpubs.com); with your data accessible for the person running the script.  
+
+## Cleaning up data on chess tournament results  
+
+```{r}
+library(stringr)
+library(DT)
+
+## Skip the headers, and get the data
+fileData <- read.csv(file="//Users/suma/Desktop/CUNY SPS - Masters Data Science/Data 607/Project 1/tournamentinfo.txt", skip = 3, header = F)
+
+## Remove the dashed lines from the data
+delimitedData <- str_split(fileData[,], "-", simplify=TRUE)
+
+## Get the Player Names. Apply regex where there is at least a first and last name
+PlayerNames <- unlist(str_extract_all(delimitedData[,], "\\w+[[:space:]]\\w+([[:space:]]\\w+)*", simplify=TRUE))
+PlayerNames <- PlayerNames[!PlayerNames[,] == "",]
+
+## Get the Player States. Apply regex where there are two capital letters followed by a space and |. Remove blank rows from the data
+PlayerStates <- unlist(str_extract_all(delimitedData[,],"[A-Z][A-Z][[:space:]][\\|]"))
+PlayerStates <- str_split(PlayerStates, "[[:space:]][\\|]", simplify=TRUE)
+PlayerStates <- PlayerStates[, -2]
+
+## Get the Total Number of Points. Apply regex that gets decimal numbers. Remove blank rows from the data
+TotalPoints <- unlist(str_extract_all(delimitedData[,], "(\\d+)[.](\\d+)", simplify=TRUE))
+TotalPoints <- TotalPoints[!TotalPoints[,] == "",]
+
+## Get the Pre-Ratings. Apply regex that gets numbers after R: and before any number of space. Remove blank rows from the data
+PreRatings <- unlist(str_extract_all(delimitedData[,], "[R:]([[:space:]]+)([[:alnum:]]+)([[:space:]]*)", simplify=TRUE))
+PreRatings <- unlist(str_extract_all(PreRatings, "\\d+[[:alnum:]]+", simplify=TRUE))
+PreRatings <- unlist(str_extract_all(PreRatings, "\\d\\d\\d+", simplify=TRUE))
+PreRatings <- PreRatings[!PreRatings[,] == "",]
+PreRatings <- as.numeric(PreRatings)
+
+## Get the opponent strings. Apply regex where there is a | followed by a letter, some space, a number, a |
+OpponentData <- unlist(str_extract_all(delimitedData[,], "([\\|][A-Z]([[:space:]]+)\\d*[\\|])([A-Z]([[:space:]]+)\\d*[\\|])*", simplify=TRUE))
+Opponents <- matrix(ncol=7)
+
+## Get the individual Opponent Indexes into a matrix of 7 columns. Remove any blank rows from the data
+Opponents <- unlist(str_extract_all(OpponentData[,], "\\d+", simplify=TRUE))
+Opponents <- Opponents[rowSums(Opponents=="")!=ncol(Opponents), ]
+
+##Instantiate Rating Averages 
+RatingAverages = NULL
+
+##Loop through each row of Opponent Index. Match each Opponent Index with its corresponding Pre-Rating. Get the average Opponent rating for each row
+for(row in 1:nrow(Opponents)){
+  numberOfOpponents = 0
+  sum = 0
+  
+  for(col in 1:ncol(Opponents)){
+    
+    if(Opponents[row, col] != ""){ # Check to make sure we are not looking at a null opponent index value
+      index <- Opponents[row, col] # Get the Opponent Index
+      index <- strtoi(index, base=0L) # Convert to integer
+      sum = sum + strtoi(PreRatings[index]) # Update sum of corresponding pre-ratings
+      numberOfOpponents = numberOfOpponents + 1 # Update number of opponents
+    }
+  }
+  
+  avg = sum/numberOfOpponents
+  RatingAverages = rbind(RatingAverages, data.frame(avg))
+}
+
+## Save all data into TournamentResults dataframe
+TournamentResults <- data.frame(PlayerNames, PlayerStates, TotalPoints, PreRatings, RatingAverages)
+colnames(TournamentResults) <- c("Player Name","Player State", "Total Number of Points", "Player's Pre-Rating", "Average Pre Chess Rating of Opponents")
+
+write.csv(TournamentResults,'//Users/suma/Desktop/CUNY SPS - Masters Data Science/Data 607/Project 1/Results.csv', TRUE)
+
+```
+  
+    
+## Cleaned up data that can go to .CSV file
+
+```{r}
+  #tournamentResults
+datatable(TournamentResults)
+```
+
+## Some statistics  
+
+**Average Player Pre-Rating for each Player State**
+```{r}
+
+StateAvgPreRatings <- data.frame(aggregate(TournamentResults[,4], list(TournamentResults$`Player State`), mean))
+colnames(StateAvgPreRatings) <- c("Player State", "Average Player's Pre-Rating")
+StateAvgPreRatings
+```
