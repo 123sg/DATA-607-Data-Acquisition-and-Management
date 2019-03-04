@@ -1,0 +1,57 @@
+---
+title: "Assignment5"
+author: "SG"
+date: "3/3/2019"
+output: html_document
+---
+## Load libraries:  
+- tidyr tidies the data  
+- dplyr transforms the data
+
+```{r}
+ library(tidyr)
+  library(dplyr)
+library(ggplot2)
+```
+
+## Read the .CSV file:  
+
+```{r}
+fileData <- read.csv(file="//Users/suma/Desktop/CUNY SPS - Masters Data Science/Data 607/Assignment5/ArrivalDelays.csv", header = T)
+head(fileData)
+```
+
+## Tidy the data using tidyr:  
+Here, we use the gather method. This is where we have one row per case, a column for each variable, and a cell for each value. We put the data's columns into rows. In this way, we are making the data from wide to long. 
+
+```{r}
+fileData <- gather(fileData, Destination, ArrivalDelay, 3:7)
+names(fileData) <- c("Airline", "Status", "Destination", "ArrivalDelay")
+
+fileData
+```
+
+We want to further tidy the data by making it wide again, using the spread function, to split the Status column's rows into two columns: On Time and Delayed, with values being the numbers from the ArrivalDelay column. Note: I've been getting an error in the code for the spread function so I didn't spread this data in time.
+
+```{r}
+  #fileData <- spread(fileData, Status, ArrivalDelay, 3:7)
+#fileData
+```
+
+## Transform the data using dplyr:  
+Here, we filter the data as an example of data transformation. We filter by the destination of Phoenix.  
+```{r}
+  filter(fileData, Destination == 'Phoenix')
+```
+
+## Statistical Analysis:  
+Here we analyze our data. There are some summary useful statistics for Arrival Delays. For the plot: It seems ggplot works best for long data, not wide data, which is why the graph below is not a meaningful data analysis. As mentioned earlier, with the coding error, I did not spread this data.  
+
+```{r}
+  summary(fileData)
+  ggplot(fileData, aes(Airline)) + 
+  geom_line(aes(y = Airline, colour = "Airline")) + 
+  geom_line(aes(y = ArrivalDelay, colour = "ArrivalDelay"))
+```
+
+
