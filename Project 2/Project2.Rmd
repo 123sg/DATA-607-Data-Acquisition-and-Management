@@ -1,0 +1,208 @@
+---
+title: "Data 607 - Project 2"
+author: "SG"
+output: github_document
+always_allow_html: yes
+---
+
+```{r}
+library(magrittr)
+library(stringr)
+library(dplyr)
+library(tidyr)
+library(zoo)
+library(ggplot2)
+library(knitr)
+library(DT)
+```
+
+#Project 2 - Perform analysis on wide data sets  
+We will analyze three different wide data sets:  
+1. Salaries by College Type - https://www.kaggle.com/wsj/college-salaries/version/1#salaries-by-college-type.csv This was found from the discussion board, post title: Salaries by College Degree/Type/Region  
+2. Graduate Admissions - https://www.kaggle.com/mohansacharya/graduate-admissions This was a data set I found on my own.    
+3. Employee Reviews - https://www.kaggle.com/petersunga/google-amazon-facebook-employee-reviews This was found the from the discussion board, post title: Employee Reviews at top tech companies      
+These data sets have a large amount of data, so we will take sample of n size = 200, from each data set.  
+
+## Salaries by College Type  
+We will analyze salaries by college type. It will be interesting to see how the college type is correlated with salaries, at:
+1. Mid Career Median Salaries by College Type and by Percentiles
+2. Starting Salaries by College Type   
+
+### Sample the Raw Data
+We get the sample of raw data for Salaries by College Type.  
+```{r}
+collegeTypeData <- read.csv("Data/salaries-by-college-type.csv")
+collegeTypeDf <- sample_n(collegeTypeData, 200)
+#collegeTypeDf <- na.omit(collegeTypeDf)
+datatable(collegeTypeDf, options = list(pageLength = 5))
+```
+
+### Reduce width of data  
+We reduce the width of the data. The following columns make the data set wide:  
+* Mid-Career 10th Percentile Salary  
+* Mid-Career 25th Percentile Salary  
+* Mid-Career 75th Percentile Salary  
+* Mid-Career 90th Percentile Salary  
+We transform these columns into two different columns: MidCareerMedianPercentile and PercentileSalary, to view salaries by their Mid Career Median Percentiles. We also reduce the string in the MidCareerMedianPercentile column to a number. The data is now cleaner to analyze:  
+```{r}
+# Reduce width of Percentile columns
+collegeTypeDf <- collegeTypeDf %>% gather(key = MidCareerMedianPercentile, value = PercentileSalary, Mid.Career.10th.Percentile.Salary:Mid.Career.90th.Percentile.Salary)
+collegeTypeDf[collegeTypeDf == "N/A"]  <- 0
+
+# Convert all Salary columns from string to numeric types
+collegeTypeDf$Starting.Median.Salary <- as.numeric(gsub('[$,]', '', collegeTypeDf$Starting.Median.Salary))
+collegeTypeDf$Mid.Career.Median.Salary <- as.numeric(gsub('[$,]', '', collegeTypeDf$Mid.Career.Median.Salary))
+collegeTypeDf$PercentileSalary <- as.numeric(gsub('[$,]', '', collegeTypeDf$PercentileSalary))
+
+# Apply regex to get Percentile numbers
+collegeTypeDf$MidCareerMedianPercentile <- sub("Mid.Career.", "\\1", collegeTypeDf$MidCareerMedianPercentile)
+collegeTypeDf$MidCareerMedianPercentile <- sub(".Percentile.Salary", "\\1", collegeTypeDf$MidCareerMedianPercentile)
+
+datatable(collegeTypeDf, options = list(pageLength = 5))
+```
+  
+###Analysis
+
+**1. What was the average salary for each Median Career Percentile?**  
+```{r}
+avgByPercentile <- aggregate(x=collegeTypeDf$PercentileSalary,
+          by=list(collegeTypeDf$School.Type,collegeTypeDf$MidCareerMedianPercentile),
+          FUN=mean)
+colnames(avgByPercentile) <- c("CollegeType", "MidCareerMedianPercentile", "AverageSalary")
+datatable(avgByPercentile, options = list(pageLength = 5))
+```
++ **Grouped Bar Plot of the above averages**  
+We see that Ivy Leage colleges had the highest average salaries for Mid Career Median Percentiles. Second highest salaries were for State colleges.  
+
+```{r}
+ggplot(avgByPercentile, aes(CollegeType, AverageSalary)) + geom_bar(aes(fill = MidCareerMedianPercentile),
+   width = 0.4, position = position_dodge(width=0.5), stat="identity") +  
+   theme(legend.position="top", legend.title = 
+   element_blank(),axis.title.x=element_blank(), 
+   axis.title.y=element_blank())
+```
+
+**Analyzing Starting Salaries**  
+**College Types with Starting Salaries > $60,000**  
+
+Here, we see only Engineering and Ivy League schools with starting salaries above $60,000.    
+
+```{r}
+#collegeTypeDf$Starting.Median.Salary <- as.numeric(collegeTypeDf$Starting.Median.Salary)
+greaterThanSixtyK<- collegeTypeDf %>% select(School.Name, School.Type, Starting.Median.Salary) %>% filter(Starting.Median.Salary > 60000)
+datatable(greaterThanSixtyK, options = list(pageLength = 5))
+```
+  
+Here we see a bar plot of the above table. Engineering schools are displayed to have higher starting salaries than Ivy League schools.  
+```{r}
+ggplot(data = greaterThanSixtyK, aes(x = School.Type, y = Starting.Median.Salary)) + 
+       geom_bar(stat = 'identity', position = 'dodge', fill="LightBlue")
+```  
+  
+
+## Graduate Admissions   
+We will analyze graduate admissions using by:
+* Letters of Recommendation and State of Purpose by Chances of Admission  
+
+### Sample the Raw Data
+We get the sample of raw data for Graduate Admissions.    
+```{r}
+admissionsData <- read.csv("Data/Admission_Predict.csv")
+admissionsDf <- sample_n(admissionsData, 200)
+datatable(admissionsDf, options = list(pageLength = 5))
+```
+
+### Reduce width of data  
+We reduce the width of the data by:
+1. Combining columns of Letter of Recommendation and State of Purpose, and a separate column for their values. We can combine these two columns because they're both based on a rating system of out of 5.  
+```{r}
+admissionsDf <- admissionsDf %>% gather(key = LetterType, value = LetterStrength, SOP:LOR)
+admissionsDf$Chance.of.Admit <- as.numeric(admissionsDf$Chance.of.Admit)
+admissionsDf$LetterStrength <- as.numeric(admissionsDf$LetterStrength)
+datatable(admissionsDf, options = list(pageLength = 5))
+```
+
+### Analysis  
+
+#### Statement of Purpose and Letters of Recommendation by Chances of Admission  
+
+Here we view a bar plot of the Chances of Admission by State of Purpose and Letters of Recommendation Strengths. We see that the higher the Strengths are, like by strengths of 4 or 5, the higher the chance of admission is. Chances of admission seemed to fair higher with Letters of recommendation than with Statements of Purpose, when strengths were lower, at about 1-3.    
+```{r}
+ggplot(admissionsDf, aes(LetterStrength, Chance.of.Admit)) + geom_bar(aes(fill = LetterType),
+   width = 0.4, position = position_dodge(width=0.5), stat="identity") +  
+   theme(legend.position="top", legend.title = 
+   element_blank(),axis.title.x=element_blank(), 
+   axis.title.y=element_blank())
+```
+
+Below we see the that the average strengths of Letters of Recommendations and Statements of Purpose seemed to be almost the same.  
+```{r}
+aggregAdmissions <- aggregate(x=admissionsDf$LetterStrength,
+          by=list(admissionsDf$LetterType),
+          FUN=mean)
+colnames(aggregAdmissions) <- c("Letter Type", "Letter Strength")
+datatable(aggregAdmissions)
+```
+
+####Chance of Admission by GPA  
+Below we observe the Chance of Admission vs. GPA. We see an overall positive linear correlation between the Chance of Admission and GPA, which makes sense.  
+
+```{r}
+ggplot(admissionsDf, aes(CGPA)) + 
+  geom_line(aes(y = Chance.of.Admit, colour = "Admission Chance"))
+```
+
+## Employee Reviews  
+It is interesting to see correlations between companies and employee reviews. Here, we will be analyzing data on employee reviews for Google, Amazon, Facebook, Apple, and Microsoft, by the following:  
+* Summary of Ratings by Company  
+
+### Sample the Raw Data
+We get the sample of raw data for Employee Reviews.  
+
+```{r}
+emplReviewData <- read.csv("Data/employee_reviews.csv")
+emplReviewDf <- sample_n(emplReviewData, 200)
+datatable(emplReviewDf, options = list(pageLength = 5))
+```
+
+###Reduce width of the data  
+
+There are several columns for ratings, that are measured 1-5:  
+* Work/Life Balance Rating  
+* Culture and Values Rating  
+* Career Opportunities Rating  
+* Comp & Benefits Rating  
+* Senior Management Rating  
+
+These columns are repetitive. So we clean this data by combining these columns into a column called RatingType and a column for each value called Rating.  
+
+```{r}
+emplReviewDf <- emplReviewDf %>% gather(key = RatingType, value = Rating, 11:15)
+emplReviewDf$overall.ratings <- as.numeric(emplReviewDf$overall.ratings)
+emplReviewDf$Rating <- gsub("[[:space:]]*","0",emplReviewDf$Rating)
+emplReviewDf$Rating <- as.numeric(emplReviewDf$Rating)
+datatable(emplReviewDf)
+```
+
+###Analysis   
+
+####Average Rating Types by Company  
+We analyze overall ratings by employees between companies. It would be interesting to see which companies received the highest type of ratings. Please note, due to not cleaning up a few blanks or na's in the Ratings data, we may not see some values.  
+
+```{r}
+  avgRatingByCompany <- aggregate(x=emplReviewDf$Rating,
+          by=list(emplReviewDf$company,emplReviewDf$RatingType),
+          FUN=mean)
+colnames(avgRatingByCompany) <- c("Company", "RatingType", "Rating")
+datatable(avgRatingByCompany, options = list(pageLength = 5))
+```
+
+Here, we see a summary bar plot of ratings and their types by company. We see that Facebook and Netflix had relatively higher ratings. Please note, due to not cleaning up a few blanks or na's in the Ratings data, we may not see some values.:    
+
+```{r}
+ggplot(avgRatingByCompany, aes(Company, Rating)) + geom_bar(aes(fill = RatingType),
+   width = 0.4, position = position_dodge(width=0.5), stat="identity") +  
+   theme(legend.position="top", legend.title = 
+   element_blank(),axis.title.x=element_blank(), 
+   axis.title.y=element_blank())
+```
