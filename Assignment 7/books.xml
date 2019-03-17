@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<books>
+<book>
+  <title>
+    C++ Without Fear : A Beginner's Guide That Makes You Feel Smart Author
+  </title>
+  <author>
+    Brian Overland
+  </author>
+  <isbn13>
+    978-0132673266
+  </isbn13>
+  <edition>
+    2
+  </edition>
+  <pages>
+    595
+  </pages>
+</book>
+<book>
+  <title>
+    Organic Chemistry
+  </title>
+  <author>
+    Marc Loudon, Jim Parise
+  </author>
+  <isbn13>
+    978-1936221349
+  </isbn13>
+  <edition>
+    6
+  </edition>
+  <pages>
+    1648
+  </pages>
+</book>
+<book>
+  <title>
+    Kuby Immunology
+  </title>
+  <author>
+    Jenni Punt, Sharon A. Stranford, Patricia P. Jones, Judith A. Owen
+  </author>
+  <isbn13>
+    978-1464189784
+  </isbn13>
+  <edition>
+    8
+  </edition>
+  <pages>
+    944
+  </pages>
+</book>
+</books>
