@@ -1,0 +1,179 @@
+---
+title: "DATA 607 - Assignment 7"
+author: "SG"
+---
+##Instructions
+Pick three of your favorite books on one of your favorite subjects. At least one of the books should have more
+than one author. For each book, include the title, authors, and two or three other attributes that you find
+interesting.
+Take the information that you’ve selected about these three books, and separately create three files which
+store the book’s information in HTML (using an html table), XML, and JSON formats (e.g. “books.html”,
+“books.xml”, and “books.json”). To help you better understand the different file structures, I’d prefer that you
+create each of these files “by hand” unless you’re already very comfortable with the file formats.
+Write R code, using your packages of choice, to load the information from each of the three sources into
+separate R data frames. Are the three data frames identical?
+Your deliverable is the three source files and the R code. If you can, package your assignment solution up into
+an .Rmd file and publish to rpubs.com. [This will also require finding a way to make your three text files
+accessible from the web].  
+
+## Load Libraries  
+```{r}
+  library(XML)
+  library(DT)
+  library(jsonlite)
+```
+
+## HTML  
+### File:  
+https://github.com/123sg/Data607/blob/master/Assignment%207/books.html  
+
+###Code:  
+<html>
+<head>
+<title>Books in HTML</title>
+</head>
+<body>
+<table> 
+  <tr>
+    <th>Title</th>
+    <th>Author</th>
+    <th>ISBN-13</th>
+    <th>Edition Number</th>
+    <th>Pages</th>
+  </tr>
+  <tr>
+    <td>C++ Without Fear : A Beginner's Guide That Makes You Feel Smart Author</td>
+    <td>Brian Overland</td>
+    <td>978-0132673266</td>
+    <td>2</td>
+    <td>595</td>
+  </tr>
+  <tr>
+    <td>Organic Chemistry</td>
+    <td>Marc Loudon, Jim Parise</td>
+    <td>978-1936221349</td>
+    <td>6</td>
+    <td>1648</td>
+  </tr>
+  <tr>
+    <td>Kuby Immunology</td>
+    <td>Jenni Punt, Sharon A. Stranford, Patricia P. Jones, Judith A. Owen</td>
+    <td>978-1464189784</td>
+    <td>8</td>
+    <td>944</td>
+  </tr>
+</table>
+</body>
+</html>  
+Below is the dataframe we extracted from the HTML:  
+```{r}
+  booksHTML <- htmlParse(file = "books.html")
+  booksHTML <- readHTMLTable(booksHTML, stringAsFactors=FALSE)
+  booksHTML <- booksHTML[[1]]
+  datatable(booksHTML)
+```
+
+## XML  
+### File:  
+https://github.com/123sg/Data607/blob/master/Assignment%207/books.xml  
+
+###Code:  
+<?xml version="1.0"?>
+<books>
+<book>
+  <title>
+    C++ Without Fear : A Beginner's Guide That Makes You Feel Smart Author
+  </title>
+  <author>
+    Brian Overland
+  </author>
+  <isbn13>
+    978-0132673266
+  </isbn13>
+  <edition>
+    2
+  </edition>
+  <pages>
+    595
+  </pages>
+</book>
+<book>
+  <title>
+    Organic Chemistry
+  </title>
+  <author>
+    Marc Loudon, Jim Parise
+  </author>
+  <isbn13>
+    978-1936221349
+  </isbn13>
+  <edition>
+    6
+  </edition>
+  <pages>
+    1648
+  </pages>
+</book>
+<book>
+  <title>
+    Kuby Immunology
+  </title>
+  <author>
+    Jenni Punt, Sharon A. Stranford, Patricia P. Jones, Judith A. Owen
+  </author>
+  <isbn13>
+    978-1464189784
+  </isbn13>
+  <edition>
+    8
+  </edition>
+  <pages>
+    944
+  </pages>
+</book>
+</books>  
+Below is the dataframe we extracted from the XML:  
+```{r}
+  booksXML <- xmlParse(file="books.XML")
+  booksXML <- xmlToDataFrame(booksXML, stringsAsFactors = FALSE)
+  datatable(booksXML)
+```
+
+## JSON  
+### File:  
+https://github.com/123sg/Data607/blob/master/Assignment%207/books.JSON  
+
+###Code
+{
+"books": [  
+  {  
+    "title": "C++ Without Fear : A Beginner's Guide That Makes You Feel Smart Author",  
+    "author": "Brian Overland",  
+    "isbn13": "978-0132673266",  
+    "edition": "2",  
+    "pages": "595"  
+  },  
+  {  
+    "title": "Organic Chemistry",  
+    "author": "Marc Loudon, Jim Parise",  
+    "isbn13": "978-1936221349",  
+    "edition": "6",  
+    "pages": "1648"  
+  },  
+  {  
+    "title": "Kuby Immunology",  
+    "author": "Jenni Punt, Sharon A. Stranford, Patricia P. Jones, Judith A. Owen",  
+    "isbn13": "978-1464189784",  
+    "edition": "8",  
+    "pages": "944"  
+  }  
+]  
+}  
+JSON code:  
+```{r}
+  booksJSON <- fromJSON("books.JSON") %>% as.data.frame
+  datatable(booksJSON)
+```
+
+##Conclusion
+All data frames generated from HTML, XML, and JSON file formats are identical.  
