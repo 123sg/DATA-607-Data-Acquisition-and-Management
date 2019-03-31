@@ -1,0 +1,38 @@
+---
+title: "Assignment 9 - Data 607"
+author: "SG"
+date: "3/30/2019"
+output: html_document
+---
+
+## Most Popular Articles Based on Views for 1 Day - NY Times
+https://developer.nytimes.com/docs/most-popular-product/1/overview
+
+###Get libraries:  
+```{r}
+library(jsonlite)
+library(httr)
+library(DT)
+```
+
+###Apply url:
+We want to retrieve data. To do this, we perform a GET request using the URL and setting the api-key in it. In this case, we want to see data for most popular articles based on views for 1 day, so this is specified as "viewed/1" in the url. We see that the status is 200, and this means that the GET request was successful.  
+```{r}
+url <- ("https://api.nytimes.com/svc/mostpopular/v2/viewed/1.json?api-key=WbUm7jLMoOppQAB9Sm4wC7A8K9QQUl6P")
+r <- GET(url, accept_json())
+r
+```
+
+###Get data from response:
+Here, we transform the JSON response to a dataframe. Here is what the JSON data looks like as text:  
+```{r}
+jsonToDf <- fromJSON(content(r, as="text"))
+jsonToDf
+```
+
+###Get results from JSON dataframe
+JSON has key-value pairs. In this case, the key for the data we want to view called "results." We can call this through the dataframe. Below is the dataframe of the results in a table format:  
+```{r}
+articleData <- jsonToDf$results
+datatable(articleData)
+```
