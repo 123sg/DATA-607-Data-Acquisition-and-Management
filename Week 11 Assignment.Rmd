@@ -1,0 +1,22 @@
+---
+title: 'Discussion/Assignment: Recommender System'
+author: "SG"
+date: "4/14/2019"
+output: html_document
+---
+##Recommender System Website: AirBnB
+## 1. Scenario Design: For the Organization's Customers.
+1. Who are your Target Users?  
+Guests looking for a place to stay. They are usually travellers looking for an affordable and comfortable place.  
+
+2. What are their Key Goals?  
+They want customers to feel at home anywhere they go in the world, outside their own homes.  
+
+3. How can you help them accomplish their goals?  
+I would first encourage them to provide users with feedback surveys on what they would like to see or have improved functionally on the website. Next, I would try to improve their website user interface, based on the user feedback. Users would include both guests and the hosts. A machine learning algorithm can be used to measure the likelihood a host wants to accommodate a guest's requests. The hope is that the higher the likelihood a host wants to accommodate a guest, the more the guest would feel at home, which is the goal of AirBnb. A machine learning algorithm can also be used for replicating bright spots measured by how many stars and positive text feedback a guest gave a host. The more stars and positive feedback a host has, the closer that AirBnb gets to achieving its goal for accomodating guests. The algorithm can help acquire and replicate patterns and trends for what makes guests happiest with their stays. It would also make sense to create a scenario design for the organization of AirBnb. This can help acquire information on how employees can perform their best for the organization.  
+
+##2. Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.
+Currently on the site's interface, there are no apparent options for guests to select their preferred transportation methods near the host locations/preferred guest locations. What can be added is a selection of available transportation options such as public transportation or car rental service businesses near their preferred location. Preferences for nearby food such as restaurants or grocery stores can also be added to the guest's options when looking for a place to stay.  
+
+##3. Include specific recommendations about how to improve the site's recommendation capabilities going forward.
+I would try to provide more accurate text-mining and machine-learning methods in the algorithm, for a potential guest to get the best host match for their listed preferences. This search may work similar to a "bag of words" type of approach, for example how recruiters find keywords for necessary skills on resumes. I would try to acquire as many preferences as possible from each the guest's and the host's text input. This could be done where instead of having only pre-defined checkboxes for user input, the user can be provided with a textbox to enter further text for more freedom of input. Currently, the website features pre-defined preferences for the user to select. Overall, the hope for this approach is to achieve more accurate matches. Incase the user text-input does not return matches, the algorithm can fall back on the pre-defined checkboxes that the user provided as preferences. 
