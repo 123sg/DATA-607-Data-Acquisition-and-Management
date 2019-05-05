@@ -1,0 +1,72 @@
+---
+title: "Suma Gopal - Tidyverse - readr, forcats, ggplot2"
+author: "Suma Gopal"
+output: html_document
+---
+# Part I: Create an Example
+
+## In this demonstration, we will explain and provide examples of three tidyverse packages. Here is a listing of the packages and their explanations: 
+
+## readr
+The readr package is a fast way to read in rectangular data like a CSV file. It is useful in that it is capable of parsing many types of data.
+
+## forcats
+The forcats package provides tools for solving problems with factors. Factors are useful for categorical data, and when there are variables with a set of fixed known values, and for when you want to show character vectors in non-alphabetical order. It can also be used to convert unknown values to NA.  
+
+## ggplot2
+ggplot2 is used for displaying graphics. You use it by first supplying the ggplot function data, then specifying how to map the variables to the aesthetics, and then add on layers for types of graphs such as geom_point() for a points graph or geom_bar() for a bar graph, scales, anc coordinate systems.  
+
+## Load the packages
+```{r}
+  library(tidyverse)
+  library(DT)
+  library(readr)
+  library(forcats)
+  library(ggplot2)
+```
+
+#Package Examples:
+
+## Data: Marvel Comicbook Characters
+Displayed below is the data that we are working with, on some characteristics of individual Marvel comicbook characters. Data Source: https://www.kaggle.com/fivethirtyeight/fivethirtyeight-comic-characters-dataset.  
+
+The data gets parsed into a dataframe using the function read_csv() from the **readr** package. We display it into a datatable, a function from DT which is a separate package from tidyverse.  
+```{r}
+  comicsData <- read_csv("marvel-wikia-data.csv")
+  datatable(comicsData, options = list(pageLength = 5))
+```
+
+### Using the forcats package and ggplot2 package
+####forcats: fct_infreq()
+* We can order unordered categorical variables by its frequency using the **forcats** function **fct_infreq()**. As a side note: it automatically puts NA's at the top, despite that it doesn't have the smallest number of entries.  
+
+####ggplot2: ggplot()
+* We use the **ggplot2** **ggplot()** function to plot the frequency of eye colors. We do this by supplying the function with the comics data, setting the x variable to output of the forcats function, adding geom_bar() for a bar graph, and another layer coor_flip() to flip the coordinates for easier display.  
+```{r}
+  ggplot(comicsData, aes(x = fct_infreq(EYE))) + 
+  geom_bar() + 
+  coord_flip()
+```
+
+####forcats
+* Below: we can apply **forcats** functions to combine levels.    
+```{r}
+  datatable(comicsData %>%
+    count(EYE, sort = TRUE))
+```
+
+#####forcats: fct_lump()
+* We see above that there are 25 different eye colors. This can be too many to display on a plot. We can reduce this down the 5 top eye colors by assigning all infrequent eye colors to "other," using the **function fct_lump()**. We can set the number of levels we want to keep, which in this case is 5.    
+```{r}
+  eyecolors <- comicsData %>% mutate(EYE = fct_lump(EYE, n = 5)) %>% count(EYE, sort = TRUE)
+datatable(eyecolors)
+```
+
+####ggplot2: ggplot(), geombar()
+* We use the **ggplot()**  function to view this reduced set of eye colors. We do this by supplying the function with the data of the 5 top eye colors, apply geombar() for a bar plot. We set the plot's aesthetics: assign the x coordinate the variable for eye color. We assign the y coordinate to frequency and this is made possibly by setting stat to "identity."  We also set the fill color to go by the variable for eye color.  
+```{r}
+ggplot(data = eyecolors) + geom_bar(mapping = aes(x = EYE, y = n, fill = EYE), stat = "identity")
+```
+
+# Part 2: Extend an Existing example
+Extended Yohannes Deboch's example with ggplot2 package. Please see link from Blackboard or Github.  
