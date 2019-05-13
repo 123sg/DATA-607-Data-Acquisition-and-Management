@@ -1,0 +1,326 @@
+---
+title: "Data 607 - Spring 2019 - FinalProject - Climate Change"
+author: "Suma Gopal"
+always_allow_html: yes
+#runtime: shiny
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toccolor: 'blue'
+    number_sections: true
+    theme: united
+---
+#Introduction
+
+In the current global climate news, we hear about predictions for sea levels rising high enough to sink cities such as Jakarta in Indonesia. Polar bears are often going hungry because they are losing their natural habitats to shrinking glaciers. Global temperatures have been sharply increasing over time. Carbon Dixoide emissions are greater than ever before and are largely impacted by large economies.    
+
+One interesting feature used that was not covered in class was plotting data to maps. In this project, global temperature data is plotted to maps! Please see the 4th section for Data Validation and Exploratory Analysis under the tab for Countries by Average Temperature.  
+
+#Objective
+
+The objective of this project is to observe how the climate and the environment have changed over time. Our planet is facing dramatic shifts in the climate and environment overall, with upward linear trends in sea levels and global temperatures. In this project, changes are observed over time in: sea levels, glacier thickness, global temperatures, and pollution emissions. Exploratory analysis is performed on the following various climate data:  
+
+* Sea levels - Changes from 1880 - 2014
+* Glacier Mass - Changes from 1945 - 2014
+* Global Land Temperatures by Country - Changes from 1850 - 2013
+* CO2 emissions from Fossil Fuels by Country - Since 1751
+
+We also observe human impact on the environment - more specifically Carbon Dioxide emissions by different countries. Most of the statistical analysis is done on the Carbonx Dioxide Emissions data for this project. The hypothesis is that some countries have higher Carbon Dixoide emissions than other countries. To support this claim, we use statistical analysis such as ANOVA to test our hypothesis and perform TUK analysis to compare countries' Carbon Dioxide emissions. It would be interesting to see how the fossil fuel emissions from countries of major economies of the world differ amongst each other.  
+
+
+```{r, Load libraries}
+  library(dplyr)
+  library(DT)
+  library(dygraphs) # timeseries
+  library(gplots)
+  library(ggplot2)
+  library(jsonlite)
+  library(lubridate) # parse datetimes
+  library(readr)
+  library(rworldmap) # plot map
+  library(tidyverse)
+  library(viridis) # map color
+  library(xts)
+```
+
+#Data Acquisition
+* JSON - Web API
+* CSV
+
+##JSON Data {.tabset}
+
+###Sea levels
+
+**Data Source**  
+
+Below, we acquire data in JSON format. The data is copyrighted by CSIRO. Here is the data source site link: https://datahub.io/core/sea-level-rise#resource-csiro_alt_gmsl_yr_2015  
+CISRO Adjusted Sea level is measured in units of inches, representing changes in sea level. This data describes cumulative changes in sea level for the world's oceans between years 1880 - 2014. It is based on a combination of long-term tide gauge measurements and recent satellite measurements. The average refers to the height of the ocean surface. It is said on the data source's site, that the ocean floor has been gradually sinking since the last Ice Age peak which was 20,000 years ago!  
+
+
+```{r, Get Seal Level Data}
+json_seaLevelFile <- 'https://datahub.io/core/sea-level-rise/datapackage.json'
+json_seaLevelData <- fromJSON(paste(readLines(json_seaLevelFile), collapse=""))
+
+# get list of all resources:
+print(json_seaLevelData$resources$name)
+
+# get all tabular data(if exists any)
+for(i in 1:length(json_seaLevelData$resources$datahub$type)){
+  if(json_seaLevelData$resources$datahub$type[i]=='derived/csv'){
+    path_to_file = json_seaLevelData$resources$path[i]
+    seaLevelData <- read.csv(url(path_to_file))
+  }
+}
+```
+
+Here is the raw data:  
+
+```{r, Display Sea Level data}
+datatable(seaLevelData, options = list(pageLength = 5))
+```
+
+**Data Transformation**  
+Here we perform a data transformation by:
+* Performing a select operation on the data from 2 specific columns, called: Year and CISRO Adjusted Sea Level.  
+* Converting the Year column to a datetime format, using  the lubridate library, a **Feature not covered in class.**  
+
+
+```{r, Sea Level Data Transformation}
+seaLevels <- seaLevelData %>%
+ select("Year", "CSIRO.Adjusted.Sea.Level")
+
+seaLevels$Year <- as_datetime(seaLevels$Year)
+
+# output to data table format
+datatable(seaLevels, options = list(pageLength = 5))
+```
+
+###Glacier Mass
+
+**Data Source**  
+Below we acquire average cumulative mass balance of reference Glaciers worldwide, from years 1945 - 2014. Here is the data source's website: https://datahub.io/core/glacier-mass-balance#readme  Data is sourced from  sourced from US EPA and the World Glacier Monitoring Service (WGMS).  
+Negative mass values point to a net loss of ice and snow compared with 1945. The units of mass measurement are in meters, representing changes in average glacier thickness.   
+
+```{r, Get Glacier Mass Data}
+  json_glacierFile <- 'https://datahub.io/core/glacier-mass-balance/datapackage.json'
+json_glacierData <- fromJSON(paste(readLines(json_glacierFile), collapse=""))
+
+# get list of all resources:
+print(json_glacierData$resources$name)
+
+# print all tabular data(if exists any)
+for(i in 1:length(json_glacierData$resources$datahub$type)){
+  if(json_glacierData$resources$datahub$type[i]=='derived/csv'){
+    path_to_file = json_glacierData$resources$path[i]
+    glacierData <- read.csv(url(path_to_file))
+  }
+}
+```
+
+Here is the data:  
+
+**Data Transformation** is done to convert the Year column to Year time format.  
+
+```{r, Glacer Mass Data Transformation}
+  glacierData$Year <- strptime(glacierData$Year, "%Y")
+  datatable(glacierData, options = list(pageLength = 5))
+```
+
+##CSV Data {.tabset}
+
+###CO2 Emissions by Country
+
+**Data Source**  
+
+Below we acquire data on Carbox Dioxide emissions from fossil fuels by country, since the year of 1751, from a CSV file. Here is the data source's website: https://datahub.io/core/co2-fossil-by-nation#data.  
+Data citation: Boden, T.A., G. Marland, and R.J. Andres. 2013. Global, Regional, and National Fossil-Fuel CO2 Emissions. Carbon Dioxide Information Analysis Center, Oak Ridge National Laboratory, U.S. Department of Energy, Oak Ridge, Tenn., U.S.A. doi 10.3334/CDIAC/00001_V2013  
+
+Here is the data:  
+
+```{r, Get and Transform CO2 Emissions Data}
+  nationEmissionsData <- read_csv("fossil-fuel-co2-emissions-by-nation_csv.csv")
+  datatable(nationEmissionsData, options = list(pageLength = 5))
+  
+  # This is emissions data from older years
+  oldestEmissions <- nationEmissionsData[which(nationEmissionsData$Year <= 1800),]
+  
+  # This is emissions data from recent years
+  recentEmissions <- nationEmissionsData[which(nationEmissionsData$Year >= 2010),]
+  recentEmissionsCountries <- subset(recentEmissions, Country == "UNITED STATES OF AMERICA" | Country == "CHINA (MAINLAND)" | Country == "INDIA" | Country == "RUSSIAN FEDERATION" | Country == "JAPAN")
+  datatable(recentEmissionsCountries)
+  datatable(oldestEmissions)
+```
+
+###Global Land Temperatures
+
+**Data Source**  
+
+Below we acquire data from a CSV file on Global Land Tempatures by Country, between years 1850 and 2013. The raw data had over 1 million records so below we are displaying a random sample of the data for 50,000 records.  
+Additionally, we have created data frames for oldest data from 1850 and the site's most recent data from 2013.  
+
+**Data Transformations**  
+
+* Performed group by function on the sampled data.
+* Converted column "dt" to a datetime format.
+* Coverted column "dt" to a year format for the dataset of 1850 and the dataset of 2013.
+
+
+```{r, Get and Transformation Temperature Data}
+  temperatureData <- read_csv("GlobalLandTemperaturesByCity.csv")
+  sampleTemp <- temperatureData %>% sample_n(size = 50,000)%>% group_by(dt)
+  sampleTemp$dt <- as_datetime(sampleTemp$dt)
+  
+  #Parse date to year in data
+  sampleTempYr <- sampleTemp
+  sampleTempYr$dt <- as.numeric(format(sampleTempYr$dt,'%Y'))
+  
+  #Get most recent data from year 2013
+  temperatureData$dt <- as.numeric(format(temperatureData$dt, '%Y'))
+  oldTemp <- temperatureData[which(temperatureData$dt == 1850),]
+  recentTemp <- temperatureData[ which(temperatureData$dt == 2013), ]
+  #datatable(recentTemp)
+  
+  datatable(sampleTemp, options = list(pageLength = 5))
+```
+
+#Data Validation and Exploratory Analysis
+##Graphics {.tabset}
+
+**1 Feature we didn't cover in class - Creating time series using dygraph library**  
+Below is a feature that we did not cover in class: dygraph library. It helps us create a time series, with the X-axis representing time.  
+
+###Sea Level Changes
+
+The time series plot below shows a linear, upward trend of sea levels. We see what looks like the sharpest rise around the year 1985.  
+
+```{r, Sea Level - Time Series Plot}
+ analysisSeaLevels=xts(x = seaLevels$CSIRO.Adjusted.Sea.Level, order.by = seaLevels$Year)
+ dygraph(analysisSeaLevels)
+```
+
+###Glacier Mass
+
+The time series plot below shows an inverse relationship with Glacier Mass and time. As time increases, glacier mass decreases.  
+
+```{r, Glacier Mass - Time Series Plot}
+  analysisGlaciers=xts(x = glacierData$Mean.cumulative.mass.balance, order.by = glacierData$Year)
+ dygraph(analysisGlaciers)
+```
+
+
+###Countries by Average Temperature
+
+**1 Feature we didn't cover in class - displaying data onto maps.**  
+
+We want to compare how temperatures from the past to recent years. Below are two maps displaying  global temperature data in degrees Celsius, for years:  
+* 1850 - Oldest temperature data from our data set  
+* 2013 - Most recent temperature data from our data set  
+
+Please note that every time this rmd file is run, we will be generating new random samples from the raw data each time, for each year. So the graph will look different each time, with possibly different countries highlighted.  
+
+#####1850
+
+During my run of the code, there appeared to be a higher occurence of cooler colors of pink, blues and purples on the map.  
+
+```{r, Map Older Temperature Data}
+map.world <- map_data('world')
+oldTempMap <- left_join(map.world, oldTemp %>% sample_n(size=200), by = c('region' = 'Country'))
+ggplot(data = oldTempMap, aes(x = long, y = lat, group = group)) +
+ geom_polygon(aes(fill = `AverageTemperature`)) + 
+scale_fill_viridis(option = 'plasma')+ 
+labs(title = "Countries by Average Temperature - Year 1850", subtitle = "Global Warming", caption = "TBA") + 
+theme_bw()
+```
+
+#####2013
+
+During my run of the code, most of the map leaned towards the warmer colors of orange. North America appeared to have cooler colors of purple.  
+
+```{r, Map Recent Temperature Data}
+map.world <- map_data('world')
+recentTempMap <- left_join(map.world, recentTemp %>% sample_n(size = 200), by = c('region' = 'Country'))
+
+ggplot(data = recentTempMap, aes(x = long, y = lat, group = group)) +
+ geom_polygon(aes(fill = `AverageTemperature`)) + 
+scale_fill_viridis(option = 'plasma')+ 
+labs(title = "Countries by Average Temperature - Year 2013", subtitle = "Global Warming", caption = "TBA") + 
+theme_bw()
+```
+
+##Statistical Analysis
+
+###CO2 Emissions From Fossil Fuels by Nation Since - Year 2010
+
+Below we perform an **ANOVA test** to analyze variances in our CO2 emissions data by country. We want to analyze if there is a statistically significant difference in means of CO2 emissions, between different countries.   
+* Categorical variable: Country
+* Response variable: Total Emissions in units of ppm
+
+**Null hypothesis**: There is no relation between countries and means of CO2 emissions.  
+**Alternative hypothesis**: There are differences between means of CO2 emissions between countries. 
+
+Below is a summary of emissions means across some countries that produce some of the highest CO2 emissions.  
+
+```{r, Show C02 Emissions Means}
+emissionsMeans <- round(tapply(recentEmissionsCountries$Total, recentEmissionsCountries$Country, mean), digits = 2)
+emissionsMeans
+```
+
+Here is a plot of emission means vs country. We can see on the graph that there are visible differences of emissions between countries. China shows to produce the highest emissions out of all countries in our data set.  
+```{r, Plot the CO2 Emissions Means}
+plotmeans(recentEmissionsCountries$Total~recentEmissionsCountries$Country, digits=2, ccol='red', mean.labels=T, main='Plot of Fossil Fuel Emissions Means by Country')
+```
+
+This may not be enough to prove statistical difference. We see in the box plot below that there is very different variation and spread across countries for CO2 emissions. The red dots on the plot represent means. Thus, this analysis is not statistically significant enough for us to reject the null hypothesis.  
+
+```{r, Show boxplot}
+ ggplot(recentEmissionsCountries, aes(x=Country, y=Total, fill=Country)) +
+    geom_boxplot(alpha=0.4) +
+    stat_summary(fun.y=mean, geom="point", shape=20, size=10, color="red", fill="red") +
+    theme(legend.position="none") +
+    scale_fill_brewer(palette="Set3")
+
+```
+
+
+#Conclusion {.tabset}
+
+In conclusion, we see that there is a significantly statistical difference of CO2 emissions by country. See below:  
+
+##Statistical Analysis
+
+We apply **ANOVA** below figure out if there is a true difference between emissions means and country or if it's only due to sampling variability. We have a signifcantly high F value of 735.2 and a very low p-value of <2e-16 which is less than the normal scientific standard of 0.05. This means that the variance of CO2 emission means **among** the countries China, U.S., India, Russia, and Japan is much larger than variations of CO2 emissions **within** each country. This means that we can accept our alternative hypothesis that there are differences between means of CO2 emissions between countries.  
+
+```{r, Perform ANOVA Test}
+anovaTest <- aov(recentEmissionsCountries$Total ~ recentEmissionsCountries$Country)
+summary(anovaTest)
+```
+
+##Graphics
+
+For pair comparisons: In in the table below, we are applying a Tukey post hoc test to see which countries have signficant CO2 emissions differences from other countries. This further supports our claim that there are differences in CO2 emissions among different countries.  
+
+```{r, TUK table}
+tuk<- TukeyHSD(anovaTest)
+tuk
+```
+
+Below we see many signficant differences in C02 emissions between countries. Significant differences are represented by those lines which do not cross the zero value. This further asserts to accept the alternative hypothesis. Please note, the country names are accidentally cut off on the y-axis.  
+
+```{r, Plot TUK}
+plot(tuk)
+```
+
+#Discussion 
+**Closing comments**  
+As predicted, we observe the following:  
+
+**Sea levels Increase, Glacier Mass Decrease, Global Temperature Increase**  
+With regards to the sea level data analysis, it is evident that seal levels have been sharply increasing with time. Glacier mass size has been sharply decreasing with time. Global temperatures have also been having a linear relationship with time.  
+
+**Carbon Dioxide Emissions**  
+From the statistical analysis we see that China appears to generate the world's highest CO2 emissions, up to year 2014 from the presented data. This makes sense because according to current world news reports, China is one of, if not the largest economies in the world.  
+
+It is evident that climate change is occuring at an accelerated pace. For a decade into the future, I predict these observed data trends to continue. However, one can hope that these trends don't continue and that people will work together to save our environment.  
+
+
